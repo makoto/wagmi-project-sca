@@ -4,6 +4,7 @@ import { sepolia } from "viem/chains"
 import { createPimlicoClient } from "permissionless/clients/pimlico"
 import {  entryPoint07Address } from "viem/account-abstraction"
 import { toSafeSmartAccount } from "permissionless/accounts"
+import { useWalletClient } from 'wagmi'
 
 function App() {
   const account = useAccount()
@@ -26,15 +27,18 @@ function App() {
     },
   })
   console.log(4, {pimlicoClient, account})
-  const safeAccount = await toSafeSmartAccount({
+  const owner = useWalletClient()
+  console.log(5, {owner})
+  toSafeSmartAccount({
     client: publicClient,
-    owners:[account],
+    owners:[owner],
     entryPoint: {
       address: entryPoint07Address,
       version: "0.7",
     }, // global entrypoint
     version: "1.4.1",
-  })
+  }).then((a)=> console.log('**then', a))
+  .catch((e)=> console.log('**error', e))
   
 
   return (

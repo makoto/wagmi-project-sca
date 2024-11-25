@@ -1,9 +1,41 @@
 import { useAccount, useConnect, useDisconnect } from 'wagmi'
+import { createPublicClient, http } from "viem"
+import { sepolia } from "viem/chains"
+import { createPimlicoClient } from "permissionless/clients/pimlico"
+import {  entryPoint07Address } from "viem/account-abstraction"
+import { toSafeSmartAccount } from "permissionless/accounts"
 
 function App() {
   const account = useAccount()
   const { connectors, connect, status, error } = useConnect()
   const { disconnect } = useDisconnect()
+  const pimlicoUrl = `https://api.pimlico.io/v2/sepolia/rpc?apikey=${import.meta.env.VITE_PIMLICO_API_KEY}`
+
+  console.log(1, import.meta.env)
+  console.log(2, sepolia)
+  const publicClient = createPublicClient({
+    chain: sepolia,
+    transport: http("https://rpc.ankr.com/eth_sepolia"),
+  })
+  console.log(3, publicClient)
+  const pimlicoClient = createPimlicoClient({
+    transport: http(pimlicoUrl),
+    entryPoint: {
+      address: entryPoint07Address,
+      version: "0.7",
+    },
+  })
+  console.log(4, {pimlicoClient, account})
+  const safeAccount = await toSafeSmartAccount({
+    client: publicClient,
+    owners:[account],
+    entryPoint: {
+      address: entryPoint07Address,
+      version: "0.7",
+    }, // global entrypoint
+    version: "1.4.1",
+  })
+  
 
   return (
     <>

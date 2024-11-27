@@ -1,24 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAccount, useConnect, useDisconnect } from 'wagmi'
-import { createPublicClient, http } from "viem"
-import { sepolia } from "viem/chains"
-import { createPimlicoClient } from "permissionless/clients/pimlico"
-import {  entryPoint07Address } from "viem/account-abstraction"
-import { toSafeSmartAccount } from "permissionless/accounts"
 import { useWalletClient } from 'wagmi'
-import { createSmartAccountClient } from "permissionless"
-const pimlicoUrl = `https://api.pimlico.io/v2/sepolia/rpc?apikey=${import.meta.env.VITE_PIMLICO_API_KEY}`
-const publicClient = createPublicClient({
-  chain: sepolia,
-  transport: http("https://rpc.ankr.com/eth_sepolia"),
-})
-const pimlicoClient = createPimlicoClient({
-  transport: http(pimlicoUrl),
-  entryPoint: {
-    address: entryPoint07Address,
-    version: "0.7",
-  },
-})
+import {
+  getPublicClient,
+  getSmartAccountClient,
+  getSafeAccount,
+} from "./client.tsx"
+const publicClient = getPublicClient()
 
 function App() {
   const [safeAccount, setSafeAccount] = useState();
@@ -30,40 +18,28 @@ function App() {
 
   const {data: walletClient} = useWalletClient();
 
-  if(!safeAccount){
-    toSafeSmartAccount({
-      client: publicClient,
-      owners:[walletClient],
-      entryPoint: {
-        address: entryPoint07Address,
-        version: "0.7",
-      }, // global entrypoint
-      version: "1.4.1",
-    }).then((_safeAccount)=>  {
+  const fetchData = async () => {
+    try {
+      console.log('**fetchData1', {walletClient});
+      const _safeAccount = await getSafeAccount(publicClient, walletClient)
+      console.log('**fetchData2', {_safeAccount});
       setSafeAccount(_safeAccount)
-      console.log('**then')
-      console.log({_safeAccount})
-      const _smartAccountClient = createSmartAccountClient({
-        account: _safeAccount,
-        chain: sepolia,
-        bundlerTransport: http(pimlicoUrl),
-        paymaster: pimlicoClient,
-        userOperation: {
-          estimateFeesPerGas: async () => {
-            return (await pimlicoClient.getUserOperationGasPrice()).fast
-          },
-        },
-      })
+      const _smartAccountClient = await getSmartAccountClient(_safeAccount)
+      console.log('**fetchData3', {_smartAccountClient});
       setSmartAccountClient(_smartAccountClient)
-      console.log('**then2', _smartAccountClient)
-    })
-    .catch((e)=> console.log('**error', e))  
-  }
+    } 
+    catch (error:any) {
+      console.log('**fetchData:error', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchData()
+    
+  }, [walletClient]); // Empty dependency array means it runs only once when the component mounts
+
   const sendTx = (_smartAccountClient) => {
     console.log(1, _smartAccountClient)
-    // if(smartAccountClient){
-    //   console.log(12, smartAccountClient)
-    // }
     _smartAccountClient.sendTransaction({
       to: "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",
       value: 0n,

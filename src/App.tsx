@@ -2,9 +2,6 @@ import { useEffect, useState } from 'react';
 import { useAccount, useConnect, useDisconnect } from 'wagmi'
 import { useWalletClient } from 'wagmi'
 import {
-	getClient,
-	getAccount,
-  getEnableSessionDetails,
   getSmartSessionsValidator
 } from '@rhinestone/module-sdk'
 import {

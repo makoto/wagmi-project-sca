@@ -12,7 +12,6 @@ import { erc7579Actions } from "permissionless/actions/erc7579";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
   
 import {
-	getSmartSessionsValidator,
 	OWNABLE_VALIDATOR_ADDRESS,
 	getSudoPolicy,
 	Session,
@@ -26,6 +25,7 @@ import {
 	getOwnableValidator,
 	encodeValidationData,
 	getEnableSessionDetails,
+    getSmartSessionsValidator
 } from '@rhinestone/module-sdk'
   
 const rpcUrl = "https://rpc.ankr.com/eth_sepolia"
@@ -110,7 +110,6 @@ export const getSmartAccountClient = async (
   }).extend(erc7579Actions());
 };
 
-
 export const setTrustAttesters = async (
     safeAccount: any,
     smartAccountClient:any,
@@ -141,8 +140,9 @@ export const setTrustAttesters = async (
 } 
 
 export const installSmartSession = async (smartAccountClient:any, pimlicoClient: any, smartSessions:any) => {
-    console.log('***installSmartSession1', {smartSessions})
-    const opHash = await smartAccountClient.installModule(smartSessions)
+    console.log('***installSmartSession1', {smartAccountClient, pimlicoClient, smartSessions})
+    const smartSessions2 = getSmartSessionsValidator({})
+    const opHash = await smartAccountClient.installModule(smartSessions2)
     console.log('***installSmartSession2', {opHash})
     return pimlicoClient.waitForUserOperationReceipt({
         hash: opHash,
@@ -150,6 +150,7 @@ export const installSmartSession = async (smartAccountClient:any, pimlicoClient:
 }
 
 export const getSession = (sessionOwner:any) => {  
+    // Step 9: https://docs.rhinestone.wtf/module-sdk/using-modules/smart-sessions#create-the-session-to-enable
     const session: Session = {
       sessionValidator: OWNABLE_VALIDATOR_ADDRESS,
       sessionValidatorInitData: encodeValidationData({
@@ -178,6 +179,7 @@ export const signSmartSession = async ( safeAccount: any, walletClient:any, sess
     console.log('**signSmartSession0', {safeAccount, walletClient, 1:walletClient?.account.address});
     const client = getPublicClient();
     console.log('**signSmartSession1', {client, session});
+    // Step 10: https://docs.rhinestone.wtf/module-sdk/using-modules/smart-sessions#get-the-session-details
     const account = getAccount({
       address: safeAccount.address,
       type: 'safe',
@@ -189,6 +191,7 @@ export const signSmartSession = async ( safeAccount: any, walletClient:any, sess
       clients: [client],
     })
     console.log('**signSmartSession3', {sessionDetails});
+    // Step 11: https://docs.rhinestone.wtf/module-sdk/using-modules/smart-sessions#have-the-user-sign-the-enable-signature
     const permissionEnableSig = await walletClient.signMessage({
         message: { raw: sessionDetails.permissionEnableHash },
     })
@@ -200,7 +203,6 @@ export const signSmartSession = async ( safeAccount: any, walletClient:any, sess
 export const createUserOperation = async (
     sessionOwner: any,
     safeAccount: any,
-    walletClient: any,
     publicClient:any,
     smartAccountClient: any,
     smartSessions:any,
@@ -211,16 +213,7 @@ export const createUserOperation = async (
         address: safeAccount.address,
         type: 'safe',
     })
-    console.log('***createUserOperation1', {
-        sessionOwner,
-        safeAccount,
-        walletClient,
-        publicClient,
-        smartAccountClient,
-        smartSessions,
-        sessionDetails    
-    })
-
+    // Step 12: https://docs.rhinestone.wtf/module-sdk/using-modules/smart-sessions#create-the-useroperation-to-execute
     const nonce = await getAccountNonce(publicClient, {
         address: safeAccount.address,
         entryPointAddress: entryPoint07Address,
@@ -248,27 +241,28 @@ export const createUserOperation = async (
         nonce,
         signature: encodeSmartSessionSignature(sessionDetails),
     })
-    console.log('***createUserOperation3',userOperation)
-    // https://docs.rhinestone.wtf/module-sdk/using-modules/smart-sessions#create-the-session-key-signature
+    console.log('***createUserOperation4',userOperation)
     
+    // Step 13: https://docs.rhinestone.wtf/module-sdk/using-modules/smart-sessions#create-the-session-key-signature
     const userOpHashToSign = getUserOperationHash({
         chainId: 11155111,
         entryPointAddress: entryPoint07Address,
         entryPointVersion: '0.7',
         userOperation,
     })
-    console.log('***createUserOperation4',userOpHashToSign)
+    console.log('***createUserOperation5',userOpHashToSign)
     const signature = await sessionOwner.signMessage({
       message: { raw: userOpHashToSign },
     })
     sessionDetails.signature = signature
-    console.log('***createUserOperation5', signature)
+    console.log('***createUserOperation6', signature)
     userOperation.signature = encodeSmartSessionSignature(sessionDetails)
     return userOperation
 }
 
 export const executeUserOperation = async (smartAccountClient:any, pimlicoClient:any, userOperation:any) => {
     console.log('executeUserOperation**0', userOperation)
+    // Step 14: https://docs.rhinestone.wtf/module-sdk/using-modules/smart-sessions#execute-the-useroperation
     const userOpHash = await smartAccountClient.sendUserOperation(userOperation) 
     console.log('executeUserOperation**1', userOpHash)
     const receipt = await pimlicoClient.waitForUserOperationReceipt({

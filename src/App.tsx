@@ -24,11 +24,10 @@ import {
 const publicClient = getPublicClient()
 const sessionOwner = getSessionOwner()
 const session = getSession(sessionOwner)
-const smartSessions = getSmartSessionsValidator({})
+
 function App() {
   const [safeAccount, setSafeAccount] = useState();
   const [smartAccountClient, setSmartAccountClient] = useState();
-  const [txHash, setTxHash] = useState();
   const [trustedAttesterTxHash, setTrustedAttesterTxHash] = useState();
   const [smartSessionTxHash, setSmartSessionTxHash] = useState();
   const [sessionDetails, setSessionDetails] = useState();
@@ -40,13 +39,7 @@ function App() {
   const { disconnect } = useDisconnect()
   const pimlicoClient = getPimlicoClient()
   const {data: walletClient} = useWalletClient();
-  // const client = getClient({
-  //   rpcUrl,
-  // })       
-  console.log({sessionOwner})
-  const client = getClient({rpcUrl:"https://rpc.ankr.com/eth_sepolia" })       
-
-
+  const smartSessions = getSmartSessionsValidator({})
   const fetchData = async () => {
     try {
       console.log('**fetchData1', {walletClient});
@@ -55,20 +48,7 @@ function App() {
       setSafeAccount(_safeAccount)
       const _smartAccountClient = await getSmartAccountClient(_safeAccount)
       console.log('**fetchData3', {_smartAccountClient});
-      setSmartAccountClient(_smartAccountClient)
-      
-      console.log('**fetchData4', {session});
-      const account = getAccount({
-        address: _safeAccount.address,
-        type: 'safe',
-      })
-      console.log('**fetchData5', {account, client, publicClient})
-      const sessionDetails = await getEnableSessionDetails({
-        sessions: [session],
-        account,
-        clients: [publicClient],
-      })
-      console.log('***fetchData6', {sessionDetails})
+      setSmartAccountClient(_smartAccountClient)      
     } 
     catch (error:any) {
       console.log('**fetchData:error', error);
@@ -78,18 +58,6 @@ function App() {
   useEffect(() => {
     fetchData()
   }, [walletClient]); // Empty dependency array means it runs only once when the component mounts
-
-
-  const sendTx = (_smartAccountClient) => {
-    console.log(1, _smartAccountClient)
-    _smartAccountClient.sendTransaction({
-      to: "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",
-      value: 0n,
-      data: "0x1234",
-    }).then((_tx:any) =>  {
-      setTxHash(_tx)
-    })
-  }
 
   const sendSetTrustAttestersTx = (
     safeAccount: any, smartAccountClient: any, pimlicoClient: any
@@ -101,10 +69,10 @@ function App() {
   }
 
   const sendInstallSmartSessionTx = (
-    smartAccountClient:any, pimlicoClient:any
+    smartAccountClient:any, pimlicoClient:any, smartSessions:any
   ) => {
     console.log('***1111', smartAccountClient, pimlicoClient)
-    installSmartSession(smartAccountClient, pimlicoClient)
+    installSmartSession(smartAccountClient, pimlicoClient, smartSessions)
     .then((_tx:any) =>  {
       console.log('***1112', _tx)
       setSmartSessionTxHash(_tx.receipt.transactionHash)
@@ -134,31 +102,12 @@ function App() {
             <h5>
               safe adress: { safeAccount.address}
             </h5>
-            <button type="button" onClick={() => sendTx(smartAccountClient)}>
-              Send Tx
-            </button>
-            {
-              txHash && (
-                `https://sepolia.etherscan.io/tx/${txHash}`
-              )
-            }
             <button type="button" onClick={() => sendSetTrustAttestersTx(safeAccount, smartAccountClient, pimlicoClient )}>
               Set trusted attesters
             </button>
-            {
-              trustedAttesterTxHash && (
-                `https://sepolia.etherscan.io/tx/${trustedAttesterTxHash}`
-              )
-            }
             <button type="button" onClick={() => sendInstallSmartSessionTx(smartAccountClient, pimlicoClient, smartSessions )}>
               Install smart session
             </button>
-            {
-              smartSessionTxHash && (
-                `https://sepolia.etherscan.io/tx/${smartSessionTxHash}`
-              )
-            }
-
             <button type="button" onClick={() => {
               console.log('***', {safeAccount, walletClient})
               signSmartSession(safeAccount, walletClient, session ).then(_sessionDetails => { 
@@ -174,7 +123,6 @@ function App() {
               createUserOperation(
                 sessionOwner,
                 safeAccount,
-                walletClient,
                 publicClient,
                 smartAccountClient,
                 smartSessions,
@@ -196,6 +144,17 @@ function App() {
             }}>
               Execute user Operation
             </button>
+            <h5>Txs</h5>
+            {
+              trustedAttesterTxHash && (
+                `https://sepolia.etherscan.io/tx/${trustedAttesterTxHash}`
+              )
+            }
+            {
+              smartSessionTxHash && (
+                `https://sepolia.etherscan.io/tx/${smartSessionTxHash}`
+              )
+            }
             {
               executeUserOperationTxHash && (
                 `https://sepolia.etherscan.io/tx/${executeUserOperationTxHash}`

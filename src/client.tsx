@@ -141,8 +141,7 @@ export const setTrustAttesters = async (
 
 export const installSmartSession = async (smartAccountClient:any, pimlicoClient: any, smartSessions:any) => {
     console.log('***installSmartSession1', {smartAccountClient, pimlicoClient, smartSessions})
-    const smartSessions2 = getSmartSessionsValidator({})
-    const opHash = await smartAccountClient.installModule(smartSessions2)
+    const opHash = await smartAccountClient.installModule(smartSessions)
     console.log('***installSmartSession2', {opHash})
     return pimlicoClient.waitForUserOperationReceipt({
         hash: opHash,

@@ -25,7 +25,6 @@ import {
 	getOwnableValidator,
 	encodeValidationData,
 	getEnableSessionDetails,
-    getSmartSessionsValidator
 } from '@rhinestone/module-sdk'
   
 const rpcUrl = "https://rpc.ankr.com/eth_sepolia"

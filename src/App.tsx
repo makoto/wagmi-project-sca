@@ -36,7 +36,9 @@ function App() {
   const { disconnect } = useDisconnect()
   const pimlicoClient = getPimlicoClient()
   const {data: walletClient} = useWalletClient();
-  const smartSessions = getSmartSessionsValidator({})
+  const smartSessions = getSmartSessionsValidator({
+    sessions: [session]
+  })
   const fetchData = async () => {
     try {
       console.log('**fetchData1', {walletClient});

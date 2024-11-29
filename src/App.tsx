@@ -9,7 +9,6 @@ import {
   getSmartAccountClient,
   getSafeAccount,
   getPimlicoClient,
-  setTrustAttesters,
   installSmartSession,
   getSession,
   getSessionOwner,
@@ -25,7 +24,6 @@ const session = getSession(sessionOwner)
 function App() {
   const [safeAccount, setSafeAccount] = useState();
   const [smartAccountClient, setSmartAccountClient] = useState();
-  const [trustedAttesterTxHash, setTrustedAttesterTxHash] = useState();
   const [smartSessionTxHash, setSmartSessionTxHash] = useState();
   const [sessionDetails, setSessionDetails] = useState();
   const [userOperation, setUserOperation] = useState();
@@ -57,15 +55,6 @@ function App() {
   useEffect(() => {
     fetchData()
   }, [walletClient]); // Empty dependency array means it runs only once when the component mounts
-
-  const sendSetTrustAttestersTx = (
-    safeAccount: any, smartAccountClient: any, pimlicoClient: any
-  ) => {
-    setTrustAttesters(safeAccount,smartAccountClient,pimlicoClient)
-    .then((_tx:any) =>  {
-      setTrustedAttesterTxHash(_tx.receipt.transactionHash)
-    })
-  }
 
   const sendInstallSmartSessionTx = (
     smartAccountClient:any, pimlicoClient:any, smartSessions:any
@@ -101,9 +90,6 @@ function App() {
             <h5>
               safe adress: { safeAccount.address}
             </h5>
-            <button type="button" onClick={() => sendSetTrustAttestersTx(safeAccount, smartAccountClient, pimlicoClient )}>
-              Set trusted attesters
-            </button>
             <button type="button" onClick={() => sendInstallSmartSessionTx(smartAccountClient, pimlicoClient, smartSessions )}>
               Install smart session
             </button>
@@ -144,11 +130,6 @@ function App() {
               Execute user Operation
             </button>
             <h5>Txs</h5>
-            {
-              trustedAttesterTxHash && (
-                `https://sepolia.etherscan.io/tx/${trustedAttesterTxHash}`
-              )
-            }
             {
               smartSessionTxHash && (
                 `https://sepolia.etherscan.io/tx/${smartSessionTxHash}`

@@ -50,7 +50,7 @@ export const getPimlicoClient = () => {
 };
 
 export const getSessionOwner = () => {
-    return  privateKeyToAccount(generatePrivateKey())
+    return privateKeyToAccount(import.meta.env.VITE_PRIVATE_KEY)
 }
 
 export const getTrustAttestersActionWithAttesters = () => {
@@ -111,35 +111,6 @@ export const getSmartAccountClient = async (
   }).extend(erc7579Actions());
 };
 
-export const setTrustAttesters = async (
-    safeAccount: any,
-    smartAccountClient:any,
-    pimlicoClient: any
-) => {
-    const trustAttestersAction = getTrustAttestersAction({
-        threshold: 1,
-        attesters: [
-          RHINESTONE_ATTESTER_ADDRESS, // Rhinestone Attester
-          MOCK_ATTESTER_ADDRESS, // Mock Attester - do not use in production
-        ],
-    })
-    console.log('***setTrustAttesters1', {trustAttestersAction})
-    const userOpHash1 = await smartAccountClient.sendUserOperation({
-        account: safeAccount,
-        calls: [
-            {
-            to: trustAttestersAction.target,
-            value: BigInt(0),
-            data: trustAttestersAction.callData,
-            },
-        ],
-    })
-    console.log('***setTrustAttesters2', {userOpHash1})
-    return pimlicoClient.waitForUserOperationReceipt({
-        hash: userOpHash1,
-    })
-} 
-
 export const installSmartSession = async (smartAccountClient:any, pimlicoClient: any, smartSessions:any) => {
     console.log('***installSmartSession1', {smartAccountClient, pimlicoClient, smartSessions})
     const opHash = await smartAccountClient.installModule(smartSessions)
@@ -149,7 +120,7 @@ export const installSmartSession = async (smartAccountClient:any, pimlicoClient:
     })
 }
 
-export const getSession = (sessionOwner:any) => {  
+export const getSession = (sessionOwner:any) => {
     // Step 9: https://docs.rhinestone.wtf/module-sdk/using-modules/smart-sessions#create-the-session-to-enable
     const session: Session = {
       sessionValidator: OWNABLE_VALIDATOR_ADDRESS,
@@ -206,12 +177,6 @@ export const signSmartSession = async ( safeAccount: any, walletClient:any, sess
     };
 
     console.log('**signSmartSession3', {sessionDetails});
-    // // Step 11: https://docs.rhinestone.wtf/module-sdk/using-modules/smart-sessions#have-the-user-sign-the-enable-signature
-    // const permissionEnableSig = await walletClient.signMessage({
-    //     message: { raw: sessionDetails.permissionEnableHash },
-    // })
-    // console.log('**signSmartSession4', {permissionEnableSig});
-    // sessionDetails.enableSessionData.enableSession.permissionEnableSig = permissionEnableSig
     return sessionDetails
 }
 

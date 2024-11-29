@@ -25,6 +25,8 @@ import {
 	getOwnableValidator,
 	encodeValidationData,
 	getEnableSessionDetails,
+    SmartSessionMode,
+    getPermissionId
 } from '@rhinestone/module-sdk'
   
 const rpcUrl = "https://rpc.ankr.com/eth_sepolia"
@@ -183,18 +185,33 @@ export const signSmartSession = async ( safeAccount: any, walletClient:any, sess
       type: 'safe',
     })
     console.log('**signSmartSession2', {account});
-    const sessionDetails = await getEnableSessionDetails({
-      sessions: [session],
-      account,
-      clients: [client],
+    // const sessionDetails = await getEnableSessionDetails({
+    //   sessions: [session],
+    //   account,
+    //   clients: [client],
+    // })
+    console.log('**signSmartSession3', {
+        mode: SmartSessionMode.USE,
+        permissionId: getPermissionId({ session }),
+        signature: getOwnableValidatorMockSignature({
+          threshold: 1,
+        }),
     })
+    const sessionDetails = {
+        mode: SmartSessionMode.USE,
+        permissionId: getPermissionId({ session }),
+        signature: getOwnableValidatorMockSignature({
+          threshold: 1,
+        }),
+    };
+
     console.log('**signSmartSession3', {sessionDetails});
-    // Step 11: https://docs.rhinestone.wtf/module-sdk/using-modules/smart-sessions#have-the-user-sign-the-enable-signature
-    const permissionEnableSig = await walletClient.signMessage({
-        message: { raw: sessionDetails.permissionEnableHash },
-    })
-    console.log('**signSmartSession4', {permissionEnableSig});
-    sessionDetails.enableSessionData.enableSession.permissionEnableSig = permissionEnableSig
+    // // Step 11: https://docs.rhinestone.wtf/module-sdk/using-modules/smart-sessions#have-the-user-sign-the-enable-signature
+    // const permissionEnableSig = await walletClient.signMessage({
+    //     message: { raw: sessionDetails.permissionEnableHash },
+    // })
+    // console.log('**signSmartSession4', {permissionEnableSig});
+    // sessionDetails.enableSessionData.enableSession.permissionEnableSig = permissionEnableSig
     return sessionDetails
 }
 

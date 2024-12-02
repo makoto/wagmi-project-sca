@@ -78,6 +78,7 @@ export const getSafeAccount = (publicClient:any,walletClient:any) => {
           address: entryPoint07Address,
           version: "0.7",
         },
+        saltNonce:BigInt(5),
         safe4337ModuleAddress: "0x7579EE8307284F293B1927136486880611F20002",
         erc7579LaunchpadAddress: "0x7579011aB74c46090561ea277Ba79D510c6C00ff",
         attesters: [
@@ -136,11 +137,21 @@ export const getSession = (sessionOwner:any) => {
       },
       actions: [
         {
-          actionTarget: "0x6fc7314c80849622b04d943a6714b05078ca2d05" as Address,
-          actionTargetSelector: toFunctionSelector("function increment()"),
+            actionTarget: "0x6fc7314c80849622b04d943a6714b05078ca2d05" as Address,
+            actionTargetSelector: toFunctionSelector("function increment()"),
+            actionPolicies: [getSudoPolicy()],
+        },
+        {
+          actionTarget: "0x2ee61b93061e3980b412b5d220d5dea24bd266c4" as Address,
+          actionTargetSelector: toFunctionSelector("function increment1()"),
           actionPolicies: [getSudoPolicy()],
         },
-      ],
+        {
+            actionTarget: "0x2ee61b93061e3980b412b5d220d5dea24bd266c4" as Address,
+            actionTargetSelector: toFunctionSelector("function increment2()"),
+            actionPolicies: [getSudoPolicy()],
+        },  
+    ],
       chainId: BigInt(sepolia.id),
     };
     return session;
@@ -187,7 +198,10 @@ export const createUserOperation = async (
     smartAccountClient: any,
     smartSessions:any,
     sessionDetails:any,
-    session:any
+    session:any,
+    pimlicoClient:any,
+    actionNumber:number,
+    actionValue:any
 ) => {
     const account = getAccount({
         address: safeAccount.address,
@@ -206,16 +220,20 @@ export const createUserOperation = async (
     const mockSignature = getOwnableValidatorMockSignature({
         threshold: 1,
     })
-    console.log('***createUserOperation3',mockSignature)
     sessionDetails.signature = mockSignature
+    console.log('***createUserOperation3',{
+        to: session.actions[actionNumber].actionTarget,
+        value: actionValue,
+        data: session.actions[actionNumber].actionTargetSelector,
+    })
     
     const userOperation = await smartAccountClient.prepareUserOperation({
         account: safeAccount,
         calls: [
             {
-            to: session.actions[0].actionTarget,
-            value: BigInt(0),
-            data: session.actions[0].actionTargetSelector,
+            to: session.actions[actionNumber].actionTarget,
+            value: actionValue,
+            data: session.actions[actionNumber].actionTargetSelector,
             },
         ],
         nonce,
@@ -237,10 +255,6 @@ export const createUserOperation = async (
     sessionDetails.signature = signature
     console.log('***createUserOperation6', signature)
     userOperation.signature = encodeSmartSessionSignature(sessionDetails)
-    return userOperation
-}
-
-export const executeUserOperation = async (smartAccountClient:any, pimlicoClient:any, userOperation:any) => {
     console.log('executeUserOperation**0', userOperation)
     // Step 14: https://docs.rhinestone.wtf/module-sdk/using-modules/smart-sessions#execute-the-useroperation
     const userOpHash = await smartAccountClient.sendUserOperation(userOperation) 

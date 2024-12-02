@@ -13,8 +13,7 @@ import {
   getSession,
   getSessionOwner,
   createUserOperation,
-  signSmartSession,
-  executeUserOperation
+  signSmartSession
 } from "./client.tsx"
 
 const publicClient = getPublicClient()
@@ -26,8 +25,8 @@ function App() {
   const [smartAccountClient, setSmartAccountClient] = useState();
   const [smartSessionTxHash, setSmartSessionTxHash] = useState();
   const [sessionDetails, setSessionDetails] = useState();
-  const [userOperation, setUserOperation] = useState();
-  const [executeUserOperationTxHash, setExecuteUserOperationTxHash] = useState();
+  // const [userOperation, setUserOperation] = useState();
+  const [txHashes, setTxHashes] = useState([]);
   
   const account = useAccount()
   const { connectors, connect, status, error } = useConnect()
@@ -63,7 +62,7 @@ function App() {
     installSmartSession(smartAccountClient, pimlicoClient, smartSessions)
     .then((_tx:any) =>  {
       console.log('***1112', _tx)
-      setSmartSessionTxHash(_tx.receipt.transactionHash)
+      setTxHashes(txHashes.concat(_tx.receipt.transactionHash))
     })
   }
 
@@ -112,35 +111,27 @@ function App() {
                 smartAccountClient,
                 smartSessions,
                 sessionDetails,
-                session
-              ).then(_userOperation => {
-                setUserOperation(_userOperation)
+                session,
+                pimlicoClient,
+                0,
+                BigInt(0)
+              ).then((_txhash)=>{
+                console.log({_txhash})
+                setTxHashes(txHashes.concat(_txhash.receipt.transactionHash))
               })
             }
             }>
-              Create User Operation
-            </button>
-            <button type="button" onClick={() => {
-              executeUserOperation(smartAccountClient, pimlicoClient, userOperation)
-              .then((_txhash)=>{
-                console.log({_txhash})
-                setExecuteUserOperationTxHash(_txhash.receipt.transactionHash)
-              })
-            }}>
-              Execute user Operation
+              Increment 1
             </button>
             <h5>Txs</h5>
-            {
-              smartSessionTxHash && (
-                `https://sepolia.etherscan.io/tx/${smartSessionTxHash}`
-              )
-            }
-            {
-              executeUserOperationTxHash && (
-                `https://sepolia.etherscan.io/tx/${executeUserOperationTxHash}`
-              )
-            }
-
+            <ul>
+              {
+                txHashes.map(tx => {
+                  console.log('**txhashes', tx)
+                  return (<li>https://sepolia.etherscan.io/tx/{tx}</li>)
+                })
+              }
+            </ul>
           </div>
         )}
 

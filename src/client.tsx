@@ -78,7 +78,7 @@ export const getSafeAccount = (publicClient:any,walletClient:any) => {
           address: entryPoint07Address,
           version: "0.7",
         },
-        saltNonce:BigInt(5),
+        saltNonce:BigInt(9),
         safe4337ModuleAddress: "0x7579EE8307284F293B1927136486880611F20002",
         erc7579LaunchpadAddress: "0x7579011aB74c46090561ea277Ba79D510c6C00ff",
         attesters: [
@@ -137,20 +137,10 @@ export const getSession = (sessionOwner:any) => {
       },
       actions: [
         {
-            actionTarget: "0x6fc7314c80849622b04d943a6714b05078ca2d05" as Address,
-            actionTargetSelector: toFunctionSelector("function increment()"),
-            actionPolicies: [getSudoPolicy()],
-        },
-        {
           actionTarget: "0x2ee61b93061e3980b412b5d220d5dea24bd266c4" as Address,
           actionTargetSelector: toFunctionSelector("function increment1()"),
           actionPolicies: [getSudoPolicy()],
-        },
-        {
-            actionTarget: "0x2ee61b93061e3980b412b5d220d5dea24bd266c4" as Address,
-            actionTargetSelector: toFunctionSelector("function increment2()"),
-            actionPolicies: [getSudoPolicy()],
-        },  
+        }  
     ],
       chainId: BigInt(sepolia.id),
     };
@@ -167,27 +157,33 @@ export const signSmartSession = async ( safeAccount: any, walletClient:any, sess
       type: 'safe',
     })
     console.log('**signSmartSession2', {account});
-    // const sessionDetails = await getEnableSessionDetails({
-    //   sessions: [session],
-    //   account,
-    //   clients: [client],
-    // })
-    console.log('**signSmartSession3', {
-        mode: SmartSessionMode.USE,
-        permissionId: getPermissionId({ session }),
-        signature: getOwnableValidatorMockSignature({
-          threshold: 1,
-        }),
+    const sessionDetails = await getEnableSessionDetails({
+      sessions: [session],
+      account,
+      clients: [client],
     })
-    const sessionDetails = {
-        mode: SmartSessionMode.USE,
-        permissionId: getPermissionId({ session }),
-        signature: getOwnableValidatorMockSignature({
-          threshold: 1,
-        }),
-    };
+    console.log('**signSmartSession3',{sessionDetails})
+    // console.log('**signSmartSession3', {
+    //     mode: SmartSessionMode.USE,
+    //     permissionId: getPermissionId({ session }),
+    //     signature: getOwnableValidatorMockSignature({
+    //       threshold: 1,
+    //     }),
+    // })
+    // const sessionDetails = {
+    //     mode: SmartSessionMode.USE,
+    //     permissionId: getPermissionId({ session }),
+    //     signature: getOwnableValidatorMockSignature({
+    //       threshold: 1,
+    //     }),
+    // };
 
-    console.log('**signSmartSession3', {sessionDetails});
+    console.log('**signSmartSession4', {sessionDetails});
+    const permissionEnableSig = await walletClient.signMessage({
+        message: { raw: sessionDetails.permissionEnableHash },
+    })
+    console.log('**signSmartSession5', {permissionEnableSig});
+    sessionDetails.enableSessionData.enableSession.permissionEnableSig = permissionEnableSig
     return sessionDetails
 }
 

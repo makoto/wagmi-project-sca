@@ -23,7 +23,6 @@ const session = getSession(sessionOwner)
 function App() {
   const [safeAccount, setSafeAccount] = useState();
   const [smartAccountClient, setSmartAccountClient] = useState();
-  const [smartSessionTxHash, setSmartSessionTxHash] = useState();
   const [sessionDetails, setSessionDetails] = useState();
   // const [userOperation, setUserOperation] = useState();
   const [txHashes, setTxHashes] = useState([]);
@@ -38,13 +37,11 @@ function App() {
   })
   const fetchData = async () => {
     try {
-      console.log('**fetchData1', {walletClient});
       const _safeAccount = await getSafeAccount(publicClient, walletClient)
-      console.log('**fetchData2', {_safeAccount});
       setSafeAccount(_safeAccount)
       const _smartAccountClient = await getSmartAccountClient(_safeAccount)
-      console.log('**fetchData3', {_smartAccountClient});
       setSmartAccountClient(_smartAccountClient)      
+
     } 
     catch (error:any) {
       console.log('**fetchData:error', error);
@@ -65,6 +62,16 @@ function App() {
       setTxHashes(txHashes.concat(_tx.receipt.transactionHash))
     })
   }
+  console.log({                
+    sessionOwner,
+    safeAccount,
+    publicClient,
+    smartAccountClient,
+    smartSessions,
+    sessionDetails,
+    session,
+    pimlicoClient,
+  })
 
   return (
     <>
@@ -86,9 +93,26 @@ function App() {
         )}
         {safeAccount && (
           <div>
-            <h5>
-              safe adress: { safeAccount.address}
-            </h5>
+            <ul>
+              <li>
+                safe adress: { safeAccount.address}
+              </li>
+              <li>
+                smartAccountClient address {smartAccountClient && smartAccountClient.account && smartAccountClient.account.address }
+              </li>
+              <li>
+                sessionOwner: {sessionOwner && sessionOwner.address}
+              </li>
+              <li>
+                smartSession address: {smartSessions && smartSessions.address}
+              </li>
+              <li>
+                sessionDetails  : {
+                  JSON.stringify(sessionDetails, (_, v) => typeof v === 'bigint' ? v.toString() : v)
+                }
+              </li>
+            </ul>
+
             <button type="button" onClick={() => sendInstallSmartSessionTx(smartAccountClient, pimlicoClient, smartSessions )}>
               Install smart session
             </button>
